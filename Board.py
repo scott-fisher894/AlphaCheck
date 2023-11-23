@@ -12,6 +12,9 @@ class Game:
         self.images = {}
         self.selected_square = None
         self.load_images()
+        self.legal_moves_for_selected_piece = []
+        self.highlight_color = (204, 204, 0)
+        self.waiting_for_promotion = False
 
     def load_images(self):
         # Load images for each piece
@@ -49,6 +52,19 @@ class Game:
                     piece_image = self.images[piece_image_key]
                     surface.blit(piece_image, (x + (SQ_SIZE - piece_image.get_width()) // 2,
                                             y + (SQ_SIZE - piece_image.get_height()) // 2))
+                
+                # Highlight selected square
+                if self.selected_square is not None:
+                    x = (self.selected_square % 8) * SQ_SIZE
+                    y = (7 - (self.selected_square // 8)) * SQ_SIZE
+                    pygame.draw.rect(surface, self.highlight_color, pygame.Rect(x, y, SQ_SIZE, SQ_SIZE), 5)
+
+                # Highlight legal moves
+                for move in self.legal_moves_for_selected_piece:
+                    target_square = move.to_square
+                    x = (target_square % 8) * SQ_SIZE
+                    y = (7 - (target_square // 8)) * SQ_SIZE
+                    pygame.draw.rect(surface, self.highlight_color, pygame.Rect(x, y, SQ_SIZE, SQ_SIZE), 5)
 
     def handle_mouse_event(self, event):
         if event.button == 1:  # Left mouse button
@@ -56,22 +72,55 @@ class Game:
             col = pos[0] // SQ_SIZE
             row = DIMENSION - 1 - (pos[1] // SQ_SIZE)
             square = chess.square(col, row)
-            print(f"Clicked on pixel {pos}, which is column {col}, row {row}, square {square}")
 
             if self.selected_square is None:
                 piece = self.board.piece_at(square)
                 if piece and piece.color == self.board.turn:
                     self.selected_square = square
+                    self.legal_moves_for_selected_piece = [move for move in self.board.legal_moves if move.from_square == self.selected_square]
             else:
                 move = chess.Move(self.selected_square, square)
                 if move in self.board.legal_moves:
-                    self.board.push(move)
-                    self.selected_square = None  # Reset selection after move
+                    moving_piece = self.board.piece_at(self.selected_square)  # Get the piece at the original square
+                    if moving_piece and moving_piece.piece_type == chess.PAWN and (square // 8 in [0, 7]):
+                        # Pawn promotion logic
+                        promotion_choice = chess.QUEEN  # Temporary, replace with actual user choice
+                        promotion_move = chess.Move(self.selected_square, square, promotion_choice)
+                        self.board.push(promotion_move)
+                    else:
+                        self.board.push(move)
+                    self.selected_square = None
+                    self.legal_moves_for_selected_piece = []
                 else:
                     self.selected_square = None  # Deselect if move is illegal
+                    self.legal_moves_for_selected_piece = []
 
+
+    def handle_pawn_promotion(self, move):
+        self.waiting_for_promotion = True
+        self.display_message("Pawn Promotion: Press 'q' for Queen, 'r' for Rook, 'b' for Bishop, 'n' for Knight")
+        promotion_choice = self.wait_for_promotion_input()
+        promotion_move = chess.Move(move.from_square, move.to_square, promotion_choice)
+        self.board.push(promotion_move)
+
+    def wait_for_promotion_input(self):
+        waiting_for_input = True
+        while waiting_for_input:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        return chess.QUEEN
+                    elif event.key == pygame.K_r:
+                        return chess.ROOK
+                    elif event.key == pygame.K_b:
+                        return chess.BISHOP
+                    elif event.key == pygame.K_n:
+                        return chess.KNIGHT
+        
     def get_status_text(self):
-        if self.board.is_checkmate():
+        if self.waiting_for_promotion:
+            return "Pawn Promotion: 'q' Queen, 'n' Knight, 'r' Rook, 'b' Bishop"
+        elif self.board.is_checkmate():
             return "Checkmate!"
         elif self.board.is_check():
             return "Check!"

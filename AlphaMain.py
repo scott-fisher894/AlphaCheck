@@ -1,6 +1,5 @@
 
 import pygame
-import sys
 from Board import *
 
 
@@ -29,13 +28,12 @@ class Main:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                    pygame.quit()
-                    sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     self.game.handle_mouse_event(event)
             
             self.game.show_board(screen)
-            self.draw_text_box(self.game.get_status_text())  # Draw the status text
+            status_text = self.game.get_status_text()
+            self.draw_text_box(status_text)
             pygame.display.update()
 
     
