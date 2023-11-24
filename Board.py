@@ -80,43 +80,42 @@ class Game:
                     self.legal_moves_for_selected_piece = [move for move in self.board.legal_moves if move.from_square == self.selected_square]
             else:
                 move = chess.Move(self.selected_square, square)
-                if move in self.board.legal_moves:
-                    moving_piece = self.board.piece_at(self.selected_square)  # Get the piece at the original square
-                    if moving_piece and moving_piece.piece_type == chess.PAWN and (square // 8 in [0, 7]):
-                        # Pawn promotion logic
-                        promotion_choice = chess.QUEEN  # Temporary, replace with actual user choice
-                        promotion_move = chess.Move(self.selected_square, square, promotion_choice)
-                        self.board.push(promotion_move)
-                    else:
-                        self.board.push(move)
-                    self.selected_square = None
-                    self.legal_moves_for_selected_piece = []
-                else:
-                    self.selected_square = None  # Deselect if move is illegal
-                    self.legal_moves_for_selected_piece = []
+                # Check for potential promotion
+                if self.board.piece_at(self.selected_square).piece_type == chess.PAWN and square // 8 in [0, 7]:
+                    self.waiting_for_promotion = True
+                    self.promotion_start_square = self.selected_square  # Starting square of the pawn
+                    self.promotion_target_square = square  # Target square for promotion
+                    # No move is made yet, just waiting for promotion piece selection
+                    # Create a promotion move with a temporary promotion choice
+                    #temp_promotion_move = chess.Move(self.selected_square, square, chess.QUEEN)
+                    #if temp_promotion_move in self.board.legal_moves:
+                        # Handle actual promotion here (allow the player to choose the piece)
+                    #    promotion_choice = chess.QUEEN  # Implement this method
+                    #    promotion_move = chess.Move(self.selected_square, square, promotion_choice)
+                    #    self.board.push(promotion_move)
+                elif move in self.board.legal_moves:
+                    self.board.push(move)
+                self.selected_square = None
+                self.legal_moves_for_selected_piece = []
 
+    def handle_promotion_input(self, event):
+        if event.key == pygame.K_q:
+            self.execute_promotion(chess.QUEEN)
+        elif event.key == pygame.K_r:
+              self.execute_promotion(chess.ROOK)
+        elif event.key == pygame.K_b:
+               self.execute_promotion(chess.BISHOP)
+        elif event.key == pygame.K_n:
+               self.execute_promotion(chess.KNIGHT)
+        #self.waiting_for_promotion = False
 
-    def handle_pawn_promotion(self, move):
-        self.waiting_for_promotion = True
-        self.display_message("Pawn Promotion: Press 'q' for Queen, 'r' for Rook, 'b' for Bishop, 'n' for Knight")
-        promotion_choice = self.wait_for_promotion_input()
-        promotion_move = chess.Move(move.from_square, move.to_square, promotion_choice)
+    def execute_promotion(self, promotion_piece):
+        promotion_move = chess.Move(self.promotion_start_square, self.promotion_target_square, promotion_piece)
         self.board.push(promotion_move)
-
-    def wait_for_promotion_input(self):
-        waiting_for_input = True
-        while waiting_for_input:
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        return chess.QUEEN
-                    elif event.key == pygame.K_r:
-                        return chess.ROOK
-                    elif event.key == pygame.K_b:
-                        return chess.BISHOP
-                    elif event.key == pygame.K_n:
-                        return chess.KNIGHT
-        
+        self.waiting_for_promotion = False
+        self.selected_square = None  # Reset the selected square
+        self.promotion_square = None  # Reset the promotion square
+  
     def get_status_text(self):
         if self.waiting_for_promotion:
             return "Pawn Promotion: 'q' Queen, 'n' Knight, 'r' Rook, 'b' Bishop"

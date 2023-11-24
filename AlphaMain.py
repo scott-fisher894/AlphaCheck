@@ -30,6 +30,8 @@ class Main:
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     self.game.handle_mouse_event(event)
+                elif event.type == pygame.KEYDOWN and self.game.waiting_for_promotion:
+                    self.game.handle_promotion_input(event)
             
             self.game.show_board(screen)
             status_text = self.game.get_status_text()
