@@ -82,17 +82,13 @@ class Game:
                 move = chess.Move(self.selected_square, square)
                 # Check for potential promotion
                 if self.board.piece_at(self.selected_square).piece_type == chess.PAWN and square // 8 in [0, 7]:
-                    self.waiting_for_promotion = True
-                    self.promotion_start_square = self.selected_square  # Starting square of the pawn
-                    self.promotion_target_square = square  # Target square for promotion
-                    # No move is made yet, just waiting for promotion piece selection
-                    # Create a promotion move with a temporary promotion choice
-                    #temp_promotion_move = chess.Move(self.selected_square, square, chess.QUEEN)
-                    #if temp_promotion_move in self.board.legal_moves:
-                        # Handle actual promotion here (allow the player to choose the piece)
-                    #    promotion_choice = chess.QUEEN  # Implement this method
-                    #    promotion_move = chess.Move(self.selected_square, square, promotion_choice)
-                    #    self.board.push(promotion_move)
+                    # test if the Pawn promotion sequence is a valid move
+                    test_move = chess.Move(self.selected_square, square, chess.QUEEN)
+                    if test_move in self.board.legal_moves:
+                        self.waiting_for_promotion = True
+                        self.promotion_start_square = self.selected_square  # Starting square of the pawn
+                        self.promotion_target_square = square  # Target square for promotion
+                        # No move is made yet, just waiting for promotion piece selection
                 elif move in self.board.legal_moves:
                     self.board.push(move)
                 self.selected_square = None
@@ -111,10 +107,11 @@ class Game:
 
     def execute_promotion(self, promotion_piece):
         promotion_move = chess.Move(self.promotion_start_square, self.promotion_target_square, promotion_piece)
-        self.board.push(promotion_move)
-        self.waiting_for_promotion = False
-        self.selected_square = None  # Reset the selected square
-        self.promotion_square = None  # Reset the promotion square
+        if promotion_move in self.board.legal_moves:
+            self.board.push(promotion_move)
+            self.waiting_for_promotion = False
+            self.selected_square = None  # Reset the selected square
+            self.promotion_square = None  # Reset the promotion square
   
     def get_status_text(self):
         if self.waiting_for_promotion:
