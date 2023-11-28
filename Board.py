@@ -1,6 +1,7 @@
 
 import chess
 import pygame
+from AlphaEngine import select_best_move
 
 WIDTH = HEIGHT = 900
 DIMENSION = 8  # Chess board is an 8x8 square
@@ -10,6 +11,7 @@ class Game:
     def __init__(self):
         self.board = chess.Board()
         self.images = {}
+        self.last_move = None
         self.selected_square = None
         self.load_images()
         self.legal_moves_for_selected_piece = []
@@ -38,6 +40,17 @@ class Game:
                 color = colors[(r + c) % 2]
                 pygame.draw.rect(surface, color, pygame.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
+        # Highlight the last move
+        if self.last_move is not None:
+            start_square = self.last_move.from_square
+            end_square = self.last_move.to_square
+            start_x = (start_square % 8) * SQ_SIZE
+            start_y = (7 - (start_square // 8)) * SQ_SIZE
+            end_x = (end_square % 8) * SQ_SIZE
+            end_y = (7 - (end_square // 8)) * SQ_SIZE
+            pygame.draw.rect(surface, self.highlight_color, pygame.Rect(start_x, start_y, SQ_SIZE, SQ_SIZE), 5)
+            pygame.draw.rect(surface, self.highlight_color, pygame.Rect(end_x, end_y, SQ_SIZE, SQ_SIZE), 5)
+        
         # Add code to draw pieces based on the python-chess board state
         for i in range(64):
             square = chess.SQUARES[i]
@@ -91,6 +104,7 @@ class Game:
                         # No move is made yet, just waiting for promotion piece selection
                 elif move in self.board.legal_moves:
                     self.board.push(move)
+                    self.last_move = move
                 self.selected_square = None
                 self.legal_moves_for_selected_piece = []
 
@@ -109,6 +123,7 @@ class Game:
         promotion_move = chess.Move(self.promotion_start_square, self.promotion_target_square, promotion_piece)
         if promotion_move in self.board.legal_moves:
             self.board.push(promotion_move)
+            self.last_move = promotion_move
             self.waiting_for_promotion = False
             self.selected_square = None  # Reset the selected square
             self.promotion_square = None  # Reset the promotion square
@@ -123,3 +138,10 @@ class Game:
         else:
             turn_text = "White's Turn" if self.board.turn == chess.WHITE else "Black's Turn"
             return turn_text
+        
+    def ai_move(self):
+        if not self.board.is_game_over():
+            best_move = select_best_move(self.board)
+            self.board.push(best_move)
+            self.last_move = best_move
+            # handle move updates, GUI changes, etc.
