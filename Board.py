@@ -1,7 +1,9 @@
 
 import chess
 import pygame
-from AlphaEngine import select_best_move
+import torch
+from AlphaEngine_NN import select_best_move, ChessEvaluationNN  # Import from NN engine
+#from AlphaEngine import select_best_move
 
 WIDTH = HEIGHT = 900
 DIMENSION = 8  # Chess board is an 8x8 square
@@ -17,6 +19,12 @@ class Game:
         self.legal_moves_for_selected_piece = []
         self.highlight_color = (204, 204, 0)
         self.waiting_for_promotion = False
+
+        # Load the neural network model
+        self.model = ChessEvaluationNN()
+        model_path = 'chess_model.pth'  # Adjust the path if necessary
+        self.model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+        self.model.eval()
 
     def load_images(self):
         # Load images for each piece
@@ -141,7 +149,7 @@ class Game:
         
     def ai_move(self):
         if not self.board.is_game_over():
-            best_move = select_best_move(self.board)
+            # Use NN-based engine for best move selection
+            best_move = select_best_move(self.board, depth=4)
             self.board.push(best_move)
             self.last_move = best_move
-            # handle move updates, GUI changes, etc.
