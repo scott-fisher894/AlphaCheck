@@ -21,22 +21,37 @@ class Main:
     def mainloop(self):
         screen = self.screen
         running = True
+        clock = pygame.time.Clock()
 
         while running:
             self.game.show_board(screen)
+            pygame.display.update()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.game.handle_mouse_event(event)
-                elif event.type == pygame.KEYDOWN and self.game.waiting_for_promotion:
-                    self.game.handle_promotion_input(event)
+                #""" (For Player vs AI Gameplay)
+                elif self.game.board.turn == chess.WHITE:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        self.game.handle_mouse_event(event)
+                    elif event.type == pygame.KEYDOWN and self.game.waiting_for_promotion:
+                        self.game.handle_promotion_input(event)
+                elif not self.game.board.is_game_over():
+                    # AI's turn (black)
+                    self.game.ai_move()
+                #"""
+            """ (For AI vs AI gameplay)
+            if not self.game.board.is_game_over():
+                # AI's turn (both white and black)
+                self.game.ai_move()
+                pygame.time.delay(500)  # Optional: Delay for AI 'thinking' visualization
+            """
             
             self.game.show_board(screen)
             status_text = self.game.get_status_text()
             self.draw_text_box(status_text)
             pygame.display.update()
+            #clock.tick(60)  # Control the game speed, 60 FPS
 
     
 main = Main()
