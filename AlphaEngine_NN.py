@@ -92,7 +92,7 @@ def alphabeta(board, depth, alpha, beta, maximizing_player, position_counts):
                 break
         return min_eval
 
-def select_best_move(board, depth=4):
+def select_best_move(board, depth):
     best_move = None
     best_value = -99999
     position_counts = [0]  # Position counter

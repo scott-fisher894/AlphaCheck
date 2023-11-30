@@ -3,7 +3,7 @@ import chess
 import pygame
 import torch
 from AlphaEngine_NN import select_best_move, ChessEvaluationNN  # Import from NN engine
-#from AlphaEngine import select_best_move
+from AlphaEngine import select_best_move
 
 WIDTH = HEIGHT = 900
 DIMENSION = 8  # Chess board is an 8x8 square
@@ -147,9 +147,16 @@ class Game:
             turn_text = "White's Turn" if self.board.turn == chess.WHITE else "Black's Turn"
             return turn_text
         
-    def ai_move(self):
+    def ai_moveNN(self):
         if not self.board.is_game_over():
             # Use NN-based engine for best move selection
+            best_move = select_best_move(self.board, depth=4)
+            self.board.push(best_move)
+            self.last_move = best_move
+
+    def ai_move(self):
+        if not self.board.is_game_over():
+            # Use Traditional Chess Engine for best move selection
             best_move = select_best_move(self.board, depth=4)
             self.board.push(best_move)
             self.last_move = best_move

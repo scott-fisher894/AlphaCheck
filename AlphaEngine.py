@@ -78,6 +78,9 @@ def get_piece_position_value(piece, square):
 
 def evaluate(board):
     total_value = 0
+    # Define the move count after which the AI should play more aggressively
+    move_count_threshold = 15  # You can adjust this threshold as needed
+    
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece is not None:
@@ -86,7 +89,17 @@ def evaluate(board):
             piece_value = piece_type_value + piece_position_value
             total_value += piece_value if piece.color == chess.WHITE else -piece_value
 
+    # Check for endgame phase and encourage more aggressive play
+    if len(board.move_stack) > move_count_threshold:
+        if board.is_checkmate():
+            # Assign a high positive value if AI can checkmate the opponent
+            total_value += 10000
+        elif board.is_check():
+            # Assign some value for putting the opponent in check
+            total_value += 500
+
     return -total_value if board.turn == chess.BLACK else total_value
+
 
 def alphabeta(board, depth, alpha, beta, maximizing_player, position_counts):
     if depth == 0 or board.is_game_over():
@@ -116,7 +129,7 @@ def alphabeta(board, depth, alpha, beta, maximizing_player, position_counts):
                 break
         return min_eval
 
-def select_best_move(board, depth=5):
+def select_best_move(board, depth):
     best_move = None
     best_value = -99999
     position_counts = [0]  # Position counter

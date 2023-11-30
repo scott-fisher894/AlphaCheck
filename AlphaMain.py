@@ -37,8 +37,10 @@ class Main:
                     elif event.type == pygame.KEYDOWN and self.game.waiting_for_promotion:
                         self.game.handle_promotion_input(event)
                 elif not self.game.board.is_game_over():
-                    # AI's turn (black)
+                    # Traditional AI's turn (black)
                     self.game.ai_move()
+                    # NN AI's turn (black)
+                    #self.game.ai_move()
                 #"""
             """ (For AI vs AI gameplay)
             if not self.game.board.is_game_over():
